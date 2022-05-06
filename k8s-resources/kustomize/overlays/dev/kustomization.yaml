@@ -9,9 +9,9 @@ resources:
 - ../../base
 
 images:
-- digest: sha256:ae2ab4deae4ed73635b105d64b2bf706cf9fb30b1ce260dd0da8317ac94e744c
+- digest: sha256:e98274b5b4e060f9204788f22f772c055553d6bf588aa551f7a5962aaf1c60a3
   name: quarkus-demo
   newName: quay.io/ssm/quarkus-demo
 commonAnnotations:
-  git-commit.sha: e8f836fa78223091311584c0048c646970875e9f
+  git-commit.sha: eb0aa6b8615e64d34c6b87355b5502b0d09889c3
   sha: sha25611
