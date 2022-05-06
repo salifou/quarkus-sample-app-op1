@@ -53,3 +53,24 @@ This pipeline can also deploy a specific container image digest
   - Potential complexity for implementing automatic CI triggering via a GitHook
   - Will likely need a naming convention for app and config folders since they will likely be parameters of the CI pipeline
 
+- Developper experience 
+
+```
+23:24 $ git push origin main 
+   To github.com:salifou/quarkus-sample-app-op1.git
+   ! [rejected]        main -> main (non-fast-forward)
+   error: failed to push some refs to 'github.com:salifou/quarkus-sample-app-op1.git'
+   hint: Updates were rejected because the tip of your current branch is behind
+   hint: its remote counterpart. Integrate the remote changes (e.g.
+   hint: 'git pull ...') before pushing again.
+   hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+
+
+23:24 $ git pull origin main --rebase
+   From github.com:salifou/quarkus-sample-app-op1
+   * branch            main       -> FETCH_HEAD
+   Successfully rebased and updated refs/heads/main.
+
+
+23:25 $ git push origin main 
+```
