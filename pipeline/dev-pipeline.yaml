@@ -1,0 +1,123 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: dev-demo-pipeline
+spec:
+  params:
+    - name: APP_REPO_GIT_URL
+      type: string
+    - default: main
+      name: APP_REPO_GIT_REVISION
+      type: string
+    - name: CONFIG_REPO_GIT_URL
+      type: string
+    - name: IMAGE_NAME
+      type: string
+    - name: IMAGE_REPO
+      type: string
+  tasks:
+    - name: git-clone
+      params:
+        - name: url
+          value: $(params.APP_REPO_GIT_URL)
+        - name: submodules
+          value: 'true'
+        - name: depth
+          value: '1'
+        - name: sslVerify
+          value: 'true'
+        - name: deleteExisting
+          value: 'true'
+        - name: verbose
+          value: 'true'
+        - name: gitInitImage
+          value: >-
+            registry.redhat.io/openshift-pipelines/pipelines-git-init-rhel8@sha256:55b0686bbd045c9c77820686318f8a5ff2aff06de566b067f408d27a93bf153c
+        - name: userHome
+          value: /tekton/home
+        - name: revision
+          value: $(params.APP_REPO_GIT_REVISION)
+      taskRef:
+        kind: ClusterTask
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: source
+        - name: ssh-directory
+          workspace: app-ssh-credentials
+    - name: build-source
+      params:
+        - name: MAVEN_IMAGE
+          value: >-
+            image-registry.openshift-image-registry.svc:5000/openshift/java:latest
+        - name: GOALS
+          value:
+            - package
+            - '-DskipTests'
+        - name: PROXY_PROTOCOL
+          value: http
+        - name: CONTEXT_DIR
+          value: .
+      runAfter:
+        - git-clone
+      taskRef:
+        kind: ClusterTask
+        name: maven
+      workspaces:
+        - name: source
+          workspace: source
+        - name: maven-settings
+          workspace: maven-repo
+    - name: build-image
+      params:
+        - name: NAME
+          value: $(params.IMAGE_NAME)
+        - name: REPO
+          value: $(params.IMAGE_REPO)
+        - name: DOCKERFILE
+          value: ./src/main/docker/Dockerfile.jvm
+        - name: CONTEXT
+          value: .
+        - name: TLSVERIFY
+          value: 'true'
+      runAfter:
+        - build-source
+      taskRef:
+        kind: Task
+        name: build-image
+      workspaces:
+        - name: source
+          workspace: source
+    - name: update-app-config
+      params:
+        - name: CONFIG_REPO
+          value: $(params.CONFIG_REPO_GIT_URL)
+        - name: OVERLAY
+          value: overlays/dev
+        - name: IMAGE_NAME
+          value: $(params.IMAGE_NAME)
+        - name: IMAGE_REPO
+          value: $(params.IMAGE_REPO)
+        - name: IMAGE_DIGEST
+          value: $(tasks.build-image.results.IMAGE_DIGEST)
+        - name: GIT_COMMIT
+          value: $(tasks.git-clone.results.commit)
+      runAfter:
+        - build-image
+      taskRef:
+        kind: Task
+        name: update-app-config
+      workspaces:
+        - name: config-ssh-directory
+          workspace: config-ssh-credentials
+  workspaces:
+    - name: source
+      optional: false
+    - name: app-ssh-credentials
+      optional: false
+    - name: config-ssh-credentials
+      optional: false
+    - name: maven-repo
+      optional: false
+  resources: []
+  finally: []

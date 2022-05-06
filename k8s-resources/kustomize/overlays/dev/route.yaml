@@ -1,0 +1,15 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: quarkus-demo
+  namespace: dev-quarkus-demo
+spec:
+  host: >-
+    quarkus-demo-dev-quarkus-demo.apps.cluster-8rv5f.8rv5f.sandbox1269.opentlc.com
+  port:
+    targetPort: http
+  to:
+    kind: Service
+    name: quarkus-demo
+    weight: 100
+  wildcardPolicy: None

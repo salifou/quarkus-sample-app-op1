@@ -1,0 +1,48 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: update-app-config
+spec:
+  params:
+    - name: CONFIG_REPO
+      type: string
+    - name: OVERLAY
+      type: string
+    - name: IMAGE_REPO
+      type: string
+    - name: IMAGE_NAME
+      type: string
+    - name: IMAGE_DIGEST
+      type: string
+    - name: GIT_COMMIT
+      type: string
+  workspaces:
+    - name: config-ssh-directory
+      description: ssh directory for git clone
+  steps:
+    - name: update
+      image: quay.io/ssm/kustomize
+      script: |
+        #!/bin/bash
+
+        set -xe
+
+        if [ "$(workspaces.config-ssh-directory.bound)" = "true" ] ; then
+          cp -R "$(workspaces.config-ssh-directory.path)" /root/.ssh
+          chmod 700 /root/.ssh
+          chmod -R 400 /root/.ssh/*
+        fi
+
+        export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_quarkus-demo-config-ssh"
+
+        git clone $(params.CONFIG_REPO) .
+
+        (cd $(params.OVERLAY) && kustomize edit set image quarkus-demo=$(params.IMAGE_REPO)/$(params.IMAGE_NAME)@$(params.IMAGE_DIGEST))
+        (cd $(params.OVERLAY) && kustomize edit set annotation git-commit.sha:$(params.GIT_COMMIT))
+                
+        git config --global user.name "Tekton pipeline"
+        git config --global user.email bot@tekton
+        git status
+        git add .
+        git commit -m "Updated by tekton pipeline"
+        git push origin main

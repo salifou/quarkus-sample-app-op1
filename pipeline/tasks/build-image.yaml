@@ -1,0 +1,52 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: build-image
+spec:
+  description: |-
+    Build container image and tag with the first seven character of the git commit sha
+  params:
+  - name: NAME
+    description: Reference of the image buildah will produce.
+    type: string
+  - name: REPO
+    description: Reference of the image buildah will produce.
+    type: string
+  - name: DOCKERFILE
+    description: Path to the Dockerfile to build.
+    type: string
+    default: ./Dockerfile
+  - name: CONTEXT
+    description: Path to the directory to use as context.
+    type: string
+    default: .
+  - default: "false"
+    description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS
+      registry)
+    name: TLSVERIFY
+    type: string
+  results:
+    - name: IMAGE_DIGEST
+      description: Digest of the image just built.
+  steps:
+  - name: build
+    image: registry.redhat.io/rhel8/buildah
+    script: |
+      #!/bin/bash
+
+      set -xe
+
+      buildah --storage-driver=vfs --tls-verify=$(params.TLSVERIFY) bud -f $(params.DOCKERFILE) -t  $(params.REPO)/$(params.NAME) $(params.CONTEXT)
+      buildah --storage-driver=vfs --tls-verify=$(params.TLSVERIFY) --digestfile $(workspaces.source.path)/image-digest push $(params.REPO)/$(params.NAME)
+
+      cat $(workspaces.source.path)/image-digest | tee $(results.IMAGE_DIGEST.path)
+
+    workingDir: $(workspaces.source.path)
+    volumeMounts:
+    - mountPath: /var/lib/containers
+      name: varlibcontainers
+  volumes:
+  - emptyDir: {}
+    name: varlibcontainers
+  workspaces:
+  - name: source
