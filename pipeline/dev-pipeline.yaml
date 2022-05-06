@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: dev-demo-pipeline
+  name: dev-quarkus-demo-pipeline
 spec:
   params:
     - name: APP_REPO_GIT_URL
@@ -57,7 +57,7 @@ spec:
         - name: PROXY_PROTOCOL
           value: http
         - name: CONTEXT_DIR
-          value: .
+          value: quarkus-demo
       runAfter:
         - git-clone
       taskRef:
@@ -93,7 +93,7 @@ spec:
         - name: CONFIG_REPO
           value: $(params.CONFIG_REPO_GIT_URL)
         - name: OVERLAY
-          value: overlays/dev
+          value: $(params.CONFIG_OVERLAY)
         - name: IMAGE_NAME
           value: $(params.IMAGE_NAME)
         - name: IMAGE_REPO

@@ -33,7 +33,8 @@ spec:
           chmod -R 400 /root/.ssh/*
         fi
 
-        export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_quarkus-demo-config-ssh"
+        # FIXME: review this
+        #export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_quarkus-demo-config-ssh"
 
         git clone $(params.CONFIG_REPO) .
 
