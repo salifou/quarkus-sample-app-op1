@@ -33,7 +33,7 @@ spec:
           chmod -R 400 /root/.ssh/*
         fi
 
-        # FIXME: review this
+        # FIXME: This may be need when using separate app and config repo
         #export GIT_SSH_COMMAND="ssh -i ~/.ssh/id_quarkus-demo-config-ssh"
 
         git clone $(params.CONFIG_REPO) .

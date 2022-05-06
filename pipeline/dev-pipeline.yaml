@@ -4,12 +4,14 @@ metadata:
   name: dev-quarkus-demo-pipeline
 spec:
   params:
-    - name: APP_REPO_GIT_URL
+    - name: GIT_URL
       type: string
-    - default: main
-      name: APP_REPO_GIT_REVISION
+    - name: GIT_REVISION
       type: string
-    - name: CONFIG_REPO_GIT_URL
+      default: main
+    - name: APP_SRC_PATH
+      type: string
+    - name: APP_CONFIG_PATH
       type: string
     - name: IMAGE_NAME
       type: string
@@ -19,7 +21,7 @@ spec:
     - name: git-clone
       params:
         - name: url
-          value: $(params.APP_REPO_GIT_URL)
+          value: $(params.GIT_URL)
         - name: submodules
           value: 'true'
         - name: depth
@@ -36,7 +38,7 @@ spec:
         - name: userHome
           value: /tekton/home
         - name: revision
-          value: $(params.APP_REPO_GIT_REVISION)
+          value: $(params.GIT_REVISION)
       taskRef:
         kind: ClusterTask
         name: git-clone
@@ -44,7 +46,7 @@ spec:
         - name: output
           workspace: source
         - name: ssh-directory
-          workspace: app-ssh-credentials
+          workspace: ssh-directory
     - name: build-source
       params:
         - name: MAVEN_IMAGE
@@ -75,9 +77,9 @@ spec:
         - name: REPO
           value: $(params.IMAGE_REPO)
         - name: DOCKERFILE
-          value: ./src/main/docker/Dockerfile.jvm
+          value: $(params.APP_SRC_PATH)/src/main/docker/Dockerfile.jvm
         - name: CONTEXT
-          value: .
+          value: $(params.APP_SRC_PATH)
         - name: TLSVERIFY
           value: 'true'
       runAfter:
@@ -91,9 +93,9 @@ spec:
     - name: update-app-config
       params:
         - name: CONFIG_REPO
-          value: $(params.CONFIG_REPO_GIT_URL)
+          value: $(params.GIT_URL)
         - name: OVERLAY
-          value: $(params.CONFIG_OVERLAY)
+          value: $(params.APP_CONFIG_PATH)/overlays/dev
         - name: IMAGE_NAME
           value: $(params.IMAGE_NAME)
         - name: IMAGE_REPO
@@ -109,13 +111,11 @@ spec:
         name: update-app-config
       workspaces:
         - name: config-ssh-directory
-          workspace: config-ssh-credentials
+          workspace: ssh-directory
   workspaces:
     - name: source
       optional: false
-    - name: app-ssh-credentials
-      optional: false
-    - name: config-ssh-credentials
+    - name: ssh-directory
       optional: false
     - name: maven-repo
       optional: false
