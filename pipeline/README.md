@@ -3,7 +3,7 @@
 
 ## Folder Structure
 
-- **provided**: Resource (secret, pvc etc.) provided for each app. DO NEED TO BE HERE
+- **provided**: Resource (secret, pvc etc.) provided for each app. DO NOT NEED TO BE HERE. APPLIED ON APP/NS CREATION
 
 - **tasks**: Namespaced tasks used in pipelines
 
@@ -37,3 +37,19 @@
 
 
 This pipeline can also deploy a specific container image digest
+
+
+
+## Issues with single git repo
+
+- Need to control update to k8s resources folder specially for higher envs (QA/PROD)
+  - How can this be enforced ?
+  - Will likely reduce developper freedom on the Git workflow
+
+- GitOps approval gate via PR can be noisy with changes unrelated to K8S resource s
+
+- If K8S can be updated via a CI pipeline then
+  - Commit history can be messy
+  - Potential complexity for implementing automatic CI triggering via a GitHook
+  - Will likely need a naming convention for app and config folders since they will likely be parameters of the CI pipeline
+
